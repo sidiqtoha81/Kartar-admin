@@ -42,15 +42,19 @@ export default function Users() {
 
   const loadUsers = async () => {
     try {
-      // Using mock data for demo since users table not in types
-      const mockUsers: User[] = [
-        { id: 6, nama: "Anjani", image_url: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400", jabatan_id: 1, jabatan: "Ketua", level: 1 },
-        { id: 8, nama: "Amad", image_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400", jabatan_id: 2, jabatan: "Wakil Ketua", level: 2 },
-        { id: 7, nama: "Toha", image_url: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400", jabatan_id: 3, jabatan: "Sekretaris", level: 3 },
-        { id: 9, nama: "Sari", image_url: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400", jabatan_id: 4, jabatan: "Bendahara", level: 4 },
-        { id: 10, nama: "Doni", image_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400", jabatan_id: 5, jabatan: "Anggota", level: 5 }
-      ];
-      setUsers(mockUsers);
+      const { data, error } = await supabase
+        .rpc('sql', {
+          query: `
+            SELECT u.id, u.nama, u.image_url, u.jabatan_id,
+                   j.nama as jabatan, j.level
+            FROM users u
+            LEFT JOIN jabatan j ON u.jabatan_id = j.id
+            ORDER BY COALESCE(j.level, 999) ASC
+          `
+        });
+
+      if (error) throw error;
+      setUsers(data || []);
     } catch (error) {
       console.error('Error loading users:', error);
       toast.error('Gagal memuat data users');
@@ -59,15 +63,13 @@ export default function Users() {
 
   const loadJabatans = async () => {
     try {
-      // Using mock data for demo
-      const mockJabatans: Jabatan[] = [
-        { id: 1, nama: "Ketua", level: 1 },
-        { id: 2, nama: "Wakil Ketua", level: 2 },
-        { id: 3, nama: "Sekretaris", level: 3 },
-        { id: 4, nama: "Bendahara", level: 4 },
-        { id: 5, nama: "Anggota", level: 5 }
-      ];
-      setJabatans(mockJabatans);
+      const { data, error } = await supabase
+        .rpc('sql', {
+          query: 'SELECT id, nama, level FROM jabatan ORDER BY level ASC'
+        });
+
+      if (error) throw error;
+      setJabatans(data || []);
     } catch (error) {
       console.error('Error loading jabatans:', error);
       toast.error('Gagal memuat data jabatan');
