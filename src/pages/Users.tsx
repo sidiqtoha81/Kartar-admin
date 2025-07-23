@@ -116,43 +116,39 @@ export default function Users() {
       };
 
       if (editingUser) {
-        // Mock update - in real app would update database
-        setUsers(prevUsers => 
-          prevUsers.map(user => 
-            user.id === editingUser.id 
-              ? { 
-                  ...user, 
-                  nama: userData.nama, 
-                  image_url: userData.image_url || null,
-                  jabatan_id: userData.jabatan_id,
-                  jabatan: jabatans.find(j => j.id === userData.jabatan_id)?.nama,
-                  level: jabatans.find(j => j.id === userData.jabatan_id)?.level
-                }
-              : user
-          )
-        );
+        // Update user in database
+        const { error } = await supabase
+          .from('users' as any)
+          .update(userData)
+          .eq('id', editingUser.id);
+
+        if (error) {
+          console.error('Error updating user:', error);
+          toast.error('Gagal memperbarui user');
+          return;
+        }
+
         toast.success('User berhasil diperbarui');
         setIsEditDialogOpen(false);
       } else {
-        // Mock insert - in real app would insert to database
-        const newId = Math.max(...users.map(u => u.id)) + 1;
-        const selectedJabatan = jabatans.find(j => j.id === userData.jabatan_id);
-        const newUser: User = {
-          id: newId,
-          nama: userData.nama,
-          image_url: userData.image_url || null,
-          jabatan_id: userData.jabatan_id,
-          jabatan: selectedJabatan?.nama,
-          level: selectedJabatan?.level
-        };
-        setUsers(prevUsers => [...prevUsers, newUser].sort((a, b) => (a.level || 999) - (b.level || 999)));
+        // Insert new user to database
+        const { error } = await supabase
+          .from('users' as any)
+          .insert([userData]);
+
+        if (error) {
+          console.error('Error creating user:', error);
+          toast.error('Gagal menambahkan user');
+          return;
+        }
+
         toast.success('User berhasil ditambahkan');
         setIsAddDialogOpen(false);
       }
 
       setFormData({ nama: "", image_url: "", jabatan_id: "" });
       setEditingUser(null);
-      loadUsers();
+      await loadUsers(); // Reload data from database
     } catch (error) {
       console.error('Error saving user:', error);
       toast.error('Gagal menyimpan user');
@@ -171,9 +167,20 @@ export default function Users() {
 
   const handleDelete = async (id: number) => {
     try {
-      // Mock delete - in real app would delete from database
-      setUsers(prevUsers => prevUsers.filter(user => user.id !== id));
+      // Delete user from database
+      const { error } = await supabase
+        .from('users' as any)
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error deleting user:', error);
+        toast.error('Gagal menghapus user');
+        return;
+      }
+
       toast.success('User berhasil dihapus');
+      await loadUsers(); // Reload data from database
     } catch (error) {
       console.error('Error deleting user:', error);
       toast.error('Gagal menghapus user');
