@@ -5,6 +5,7 @@ import {
   LayoutDashboard, 
   FolderOpen, 
   Calendar, 
+  Users,
   LogOut,
   Menu,
   X
@@ -26,6 +27,7 @@ const AdminLayout = () => {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
     { icon: FolderOpen, label: 'Categories', path: '/admin/categories' },
     { icon: Calendar, label: 'Activities', path: '/admin/activities' },
+    { icon: Users, label: 'Users', path: '/admin/users' },
   ];
 
   return (

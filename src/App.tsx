@@ -10,6 +10,7 @@ import AdminLayout from "./components/AdminLayout";
 import AdminDashboard from "./pages/AdminDashboard";
 import Categories from "./pages/Categories";
 import Activities from "./pages/Activities";
+import Users from "./pages/Users";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -33,6 +34,7 @@ const App = () => (
               <Route index element={<AdminDashboard />} />
               <Route path="categories" element={<Categories />} />
               <Route path="activities" element={<Activities />} />
+              <Route path="users" element={<Users />} />
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
