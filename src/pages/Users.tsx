@@ -42,19 +42,34 @@ export default function Users() {
 
   const loadUsers = async () => {
     try {
-      const { data, error } = await supabase
-        .rpc('sql', {
-          query: `
-            SELECT u.id, u.nama, u.image_url, u.jabatan_id,
-                   j.nama as jabatan, j.level
-            FROM users u
-            LEFT JOIN jabatan j ON u.jabatan_id = j.id
-            ORDER BY COALESCE(j.level, 999) ASC
-          `
-        });
+      // Fetch users and jabatan separately since tables not in types
+      const usersQuery = supabase.from('users' as any).select('*');
+      const jabatansQuery = supabase.from('jabatan' as any).select('*');
+      
+      const [usersResult, jabatansResult] = await Promise.all([usersQuery, jabatansQuery]);
 
-      if (error) throw error;
-      setUsers(data || []);
+      if (usersResult.error || jabatansResult.error) {
+        console.error('Database query failed:', usersResult.error || jabatansResult.error);
+        toast.error('Gagal memuat data dari database');
+        return;
+      }
+
+      const usersData = usersResult.data as any[];
+      const jabatansData = jabatansResult.data as any[];
+
+      const formattedUsers: User[] = (usersData || []).map((user: any) => {
+        const jabatan = (jabatansData || []).find((j: any) => j.id === user.jabatan_id);
+        return {
+          id: user.id,
+          nama: user.nama, 
+          image_url: user.image_url,
+          jabatan_id: user.jabatan_id,
+          jabatan: jabatan?.nama,
+          level: jabatan?.level
+        };
+      }).sort((a, b) => (a.level || 999) - (b.level || 999));
+
+      setUsers(formattedUsers);
     } catch (error) {
       console.error('Error loading users:', error);
       toast.error('Gagal memuat data users');
@@ -64,12 +79,21 @@ export default function Users() {
   const loadJabatans = async () => {
     try {
       const { data, error } = await supabase
-        .rpc('sql', {
-          query: 'SELECT id, nama, level FROM jabatan ORDER BY level ASC'
-        });
+        .from('jabatan' as any)
+        .select('*')
+        .order('level', { ascending: true });
 
-      if (error) throw error;
-      setJabatans(data || []);
+      if (error) {
+        console.error('Error loading jabatans:', error);
+        toast.error('Gagal memuat data jabatan');
+        return;
+      }
+      
+      setJabatans((data as any[])?.map((j: any) => ({
+        id: j.id,
+        nama: j.nama,
+        level: j.level
+      })) || []);
     } catch (error) {
       console.error('Error loading jabatans:', error);
       toast.error('Gagal memuat data jabatan');
