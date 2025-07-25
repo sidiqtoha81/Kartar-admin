@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, User, Crown } from "lucide-react";
+import { Plus, Edit, Trash2, User, Crown, Building } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -28,6 +29,18 @@ interface Jabatan {
   level: number;
 }
 
+interface DetailData {
+  id: number;
+  masa_jabatan: string;
+  alamat: string;
+  no_telp?: string;
+  email?: string;
+  yt_url?: string;
+  instagram_url?: string;
+  facebook_url?: string;
+  tiktok_url?: string;
+}
+
 export default function Users() {
   const [users, setUsers] = useState<User[]>([]);
   const [jabatans, setJabatans] = useState<Jabatan[]>([]);
@@ -38,6 +51,20 @@ export default function Users() {
     nama: "",
     image_url: "",
     jabatan_id: ""
+  });
+
+  // Detail Data states
+  const [detailData, setDetailData] = useState<DetailData | null>(null);
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
+  const [detailFormData, setDetailFormData] = useState({
+    masa_jabatan: "",
+    alamat: "",
+    no_telp: "",
+    email: "",
+    yt_url: "",
+    instagram_url: "",
+    facebook_url: "",
+    tiktok_url: ""
   });
 
   const loadUsers = async () => {
@@ -100,9 +127,46 @@ export default function Users() {
     }
   };
 
+  const loadDetailData = async () => {
+    try {
+      setIsDetailLoading(true);
+      const { data, error } = await supabase
+        .from('detail_data' as any)
+        .select('*')
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error loading detail data:', error);
+        toast.error('Gagal memuat data organisasi');
+        return;
+      }
+
+      if (data) {
+        const detailDataRecord = data as any;
+        setDetailData(detailDataRecord);
+        setDetailFormData({
+          masa_jabatan: detailDataRecord.masa_jabatan || "",
+          alamat: detailDataRecord.alamat || "",
+          no_telp: detailDataRecord.no_telp || "",
+          email: detailDataRecord.email || "",
+          yt_url: detailDataRecord.yt_url || "",
+          instagram_url: detailDataRecord.instagram_url || "",
+          facebook_url: detailDataRecord.facebook_url || "",
+          tiktok_url: detailDataRecord.tiktok_url || ""
+        });
+      }
+    } catch (error) {
+      console.error('Error loading detail data:', error);
+      toast.error('Gagal memuat data organisasi');
+    } finally {
+      setIsDetailLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadUsers();
     loadJabatans();
+    loadDetailData();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -201,6 +265,58 @@ export default function Users() {
         Level {level}
       </Badge>
     );
+  };
+
+  const handleDetailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      setIsDetailLoading(true);
+      
+      const updateData = {
+        masa_jabatan: detailFormData.masa_jabatan,
+        alamat: detailFormData.alamat,
+        no_telp: detailFormData.no_telp || null,
+        email: detailFormData.email || null,
+        yt_url: detailFormData.yt_url || null,
+        instagram_url: detailFormData.instagram_url || null,
+        facebook_url: detailFormData.facebook_url || null,
+        tiktok_url: detailFormData.tiktok_url || null
+      };
+
+      if (detailData?.id) {
+        // Update existing record
+        const { error } = await supabase
+          .from('detail_data' as any)
+          .update(updateData)
+          .eq('id', detailData.id);
+
+        if (error) {
+          console.error('Error updating detail data:', error);
+          toast.error('Gagal memperbarui data organisasi');
+          return;
+        }
+      } else {
+        // Insert new record (upsert)
+        const { error } = await supabase
+          .from('detail_data' as any)
+          .insert([updateData]);
+
+        if (error) {
+          console.error('Error inserting detail data:', error);
+          toast.error('Gagal menyimpan data organisasi');
+          return;
+        }
+      }
+
+      toast.success('Data organisasi berhasil disimpan');
+      await loadDetailData();
+    } catch (error) {
+      console.error('Error saving detail data:', error);
+      toast.error('Gagal menyimpan data organisasi');
+    } finally {
+      setIsDetailLoading(false);
+    }
   };
 
   return (
@@ -397,6 +513,116 @@ export default function Users() {
               ))}
             </TableBody>
           </Table>
+        </CardContent>
+      </Card>
+
+      {/* Detail Data Organisasi Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building className="h-5 w-5" />
+            Detail Data Organisasi
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleDetailSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="masa_jabatan">Masa Jabatan *</Label>
+                <Input
+                  id="masa_jabatan"
+                  value={detailFormData.masa_jabatan}
+                  onChange={(e) => setDetailFormData({ ...detailFormData, masa_jabatan: e.target.value })}
+                  placeholder="2024-2029"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={detailFormData.email}
+                  onChange={(e) => setDetailFormData({ ...detailFormData, email: e.target.value })}
+                  placeholder="organisasi@email.com"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="alamat">Alamat *</Label>
+              <Textarea
+                id="alamat"
+                value={detailFormData.alamat}
+                onChange={(e) => setDetailFormData({ ...detailFormData, alamat: e.target.value })}
+                placeholder="Alamat lengkap organisasi"
+                required
+                rows={3}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="no_telp">Nomor Telepon</Label>
+              <Input
+                id="no_telp"
+                value={detailFormData.no_telp}
+                onChange={(e) => setDetailFormData({ ...detailFormData, no_telp: e.target.value })}
+                placeholder="+62 xxx-xxxx-xxxx"
+              />
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Media Sosial</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="youtube_url">YouTube URL</Label>
+                  <Input
+                    id="youtube_url"
+                    type="url"
+                    value={detailFormData.yt_url}
+                    onChange={(e) => setDetailFormData({ ...detailFormData, yt_url: e.target.value })}
+                    placeholder="https://youtube.com/@channel"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="instagram_url">Instagram URL</Label>
+                  <Input
+                    id="instagram_url"
+                    type="url"
+                    value={detailFormData.instagram_url}
+                    onChange={(e) => setDetailFormData({ ...detailFormData, instagram_url: e.target.value })}
+                    placeholder="https://instagram.com/username"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="facebook_url">Facebook URL</Label>
+                  <Input
+                    id="facebook_url"
+                    type="url"
+                    value={detailFormData.facebook_url}
+                    onChange={(e) => setDetailFormData({ ...detailFormData, facebook_url: e.target.value })}
+                    placeholder="https://facebook.com/page"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="tiktok_url">TikTok URL</Label>
+                  <Input
+                    id="tiktok_url"
+                    type="url"
+                    value={detailFormData.tiktok_url}
+                    onChange={(e) => setDetailFormData({ ...detailFormData, tiktok_url: e.target.value })}
+                    placeholder="https://tiktok.com/@username"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <Button type="submit" disabled={isDetailLoading}>
+                {isDetailLoading ? 'Menyimpan...' : 'Simpan Data Organisasi'}
+              </Button>
+            </div>
+          </form>
         </CardContent>
       </Card>
     </div>
