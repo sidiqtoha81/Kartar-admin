@@ -12,7 +12,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ImageUpload } from "@/components/ImageUpload";
 
 interface User {
   id: number;
@@ -233,12 +232,16 @@ export default function Users() {
                   required
                 />
               </div>
-              <ImageUpload
-                value={formData.image_url}
-                onChange={(url) => setFormData({ ...formData, image_url: url })}
-                label="Avatar Image"
-                placeholder="Upload or enter avatar URL"
-              />
+              <div>
+                <Label htmlFor="image_url">URL Gambar</Label>
+                <Input
+                  id="image_url"
+                  type="url"
+                  value={formData.image_url}
+                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                  placeholder="https://example.com/avatar.jpg"
+                />
+              </div>
               <div>
                 <Label htmlFor="jabatan">Jabatan</Label>
                 <Select value={formData.jabatan_id} onValueChange={(value) => setFormData({ ...formData, jabatan_id: value })}>
@@ -328,12 +331,16 @@ export default function Users() {
                                 required
                               />
                             </div>
-                            <ImageUpload
-                              value={formData.image_url}
-                              onChange={(url) => setFormData({ ...formData, image_url: url })}
-                              label="Avatar Image"
-                              placeholder="Upload or enter avatar URL"
-                            />
+                            <div>
+                              <Label htmlFor="edit-image_url">URL Gambar</Label>
+                              <Input
+                                id="edit-image_url"
+                                type="url"
+                                value={formData.image_url}
+                                onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                                placeholder="https://example.com/avatar.jpg"
+                              />
+                            </div>
                             <div>
                               <Label htmlFor="edit-jabatan">Jabatan</Label>
                               <Select value={formData.jabatan_id} onValueChange={(value) => setFormData({ ...formData, jabatan_id: value })}>
