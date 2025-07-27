@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Plus, Edit, Trash2, Calendar as CalendarIcon, MapPin, Users } from 'lucide-react';
+import { ImageUpload } from '@/components/ImageUpload';
 
 interface Activity {
   id: number;
@@ -292,16 +293,12 @@ const Activities = () => {
                   />
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="image_url">Image URL (optional)</Label>
-                  <Input
-                    id="image_url"
-                    value={formData.image_url}
-                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                    placeholder="https://example.com/image.jpg"
-                    type="url"
-                  />
-                </div>
+                <ImageUpload
+                  value={formData.image_url}
+                  onChange={(url) => setFormData({ ...formData, image_url: url })}
+                  label="Activity Image (optional)"
+                  placeholder="Upload or enter image URL"
+                />
               </div>
               
               <div className="flex gap-2 pt-4">

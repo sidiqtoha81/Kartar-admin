@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Plus, Edit, Trash2, Image as ImageIcon } from 'lucide-react';
+import { ImageUpload } from '@/components/ImageUpload';
 
 interface Category {
   id: number;
@@ -191,16 +192,12 @@ const Categories = () => {
                 />
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="image_url">Image URL (optional)</Label>
-                <Input
-                  id="image_url"
-                  value={formData.image_url}
-                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                  placeholder="https://example.com/image.jpg"
-                  type="url"
-                />
-              </div>
+              <ImageUpload
+                value={formData.image_url}
+                onChange={(url) => setFormData({ ...formData, image_url: url })}
+                label="Category Image (optional)"
+                placeholder="Upload or enter image URL"
+              />
               
               <div className="flex gap-2 pt-4">
                 <Button type="submit" variant="admin" className="flex-1">
